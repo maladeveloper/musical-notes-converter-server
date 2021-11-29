@@ -22,7 +22,7 @@ def colnum_string(n):
 
 def insert_spacing(write_arr):
     spacing = [''] * 4
-    n = 2
+    n = 3
 
     i = n
     while i < len(write_arr):
@@ -61,7 +61,7 @@ for i in range( len( cols ) ):
 
         new_rows_num = ((len(wksh.row_values(row_num)) - 1) // chunk_num) + 1  
 
-        new_sheet_rows_num = 3 * new_rows_num + 1
+        new_sheet_rows_num = 4 * new_rows_num + 1
         inst_wksh = sh.add_worksheet(title=instrument_name, rows=new_sheet_rows_num, cols=chunk_num)
 
         ref_count = 2 # First value is instrument name
@@ -69,6 +69,7 @@ for i in range( len( cols ) ):
         for row in range(1, new_rows_num + 1):
             row_arr = []
             num_arr = []
+            aff_arr = []
             for col in range(1,chunk_num + 1):
                 ref_col = colnum_string(ref_count) 
                 ref_count += 1 
@@ -80,7 +81,12 @@ for i in range( len( cols ) ):
                 num_value = fr'={SHEET_1}!{num_ref}'
                 num_arr.append(num_value)
 
+                aff_ref = f"{ref_col}{row_num - 1}"
+                aff_value = fr'={SHEET_1}!{aff_ref}'
+                aff_arr.append(aff_value)
+
             write_arr.append(num_arr)
+            write_arr.append(aff_arr)
             write_arr.append(row_arr)
 
         insert_spacing(write_arr)
@@ -93,14 +99,30 @@ for i in range( len( cols ) ):
 
         num_rows = len(write_arr) + 1
 
-        for row in range(3, num_rows + 1, 3): # Format every third row starting at the 3rd row
+        for row in range(4, num_rows + 1, 4): # Format every third row starting at the 3rd row
             rate_limit_wait()
 
             inst_wksh.format( get_range(row, chunk_num), {
               "horizontalAlignment": "CENTER",
             })
 
-        for row in range(2, num_rows + 1, 3): # Format every third row starting at the 2nd row
+        for row in range(3, num_rows + 1, 4): # Format every third row starting at the 3rd row
+            rate_limit_wait()
+
+            inst_wksh.format( get_range(row, chunk_num), {
+              "horizontalAlignment": "CENTER",
+              "textFormat": {
+                  "foregroundColor": {
+                       "red": (128/255),
+                       "green": (128/255),
+                       "blue": (128/255)
+                   },
+                  "fontSize": 12,
+                  "italic": True
+               }
+            })
+
+        for row in range(2, num_rows + 1, 4): # Format every third row starting at the 2nd row
             rate_limit_wait()
             inst_wksh.format( get_range(row, chunk_num), {
                 "backgroundColor": {
@@ -115,7 +137,7 @@ for i in range( len( cols ) ):
                }
             })
             
-        for row in range(1, num_rows + 1 , 3): # Merge every third row starting at the 1st row
+        for row in range(1, num_rows + 1 , 4): # Merge every third row starting at the 1st row
             rate_limit_wait()
 
             inst_wksh.merge_cells(get_range(row, chunk_num))
