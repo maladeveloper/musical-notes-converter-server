@@ -6,6 +6,7 @@ import gspread
 HEADER_ROWS = 3
 SHEET_1 = "SHEET1"
 
+
 def colnum_string(num):
     '''Converts coloumn number to google spreadsheet coloumn string'''
     string = ""
@@ -16,15 +17,17 @@ def colnum_string(num):
 
 
 def insert_spacing(write_arr, bar_num):
-    '''Inserts a space after every bar in the write array'''
-    write_rows = 4 # The amount of rows being written for one bar
+    '''Inserts a space before every bar in the write array'''
+    write_rows = 4  # The amount of rows being written for one bar
     spacing = [''] * bar_num
-    space_num = write_rows - 1 
 
-    i = space_num
-    while i < len(write_arr):
+    i = write_rows - 1
+    while i <= len(write_arr):
         write_arr.insert(i, spacing)
-        i += (space_num + 1)
+        i += write_rows
+
+    # Change spaces to be before rather than after
+    write_arr.insert(0, write_arr.pop())
 
 
 def get_range(row, chunk_num):
@@ -40,13 +43,13 @@ def rate_limit_wait():
     time.sleep(seconds)
 
 
-def produce_write_arr(row_num, chunk_num, new_rows_num):
+def produce_write_arr(row_num, chunk_num, num_data_rows):
     '''Produces the write array for a row number which is associated with a instrument'''
-    bar_num = 4 # Each bar has 4 values
+    bar_num = 4  # Each bar has 4 values
     ref_count = 2  # First value is instrument name
     write_arr = []
 
-    for row in range(1, new_rows_num + 1):
+    for row in range(1, num_data_rows + 1):
         row_arr = []
         num_arr = []
         aff_arr = []
@@ -73,7 +76,7 @@ def produce_write_arr(row_num, chunk_num, new_rows_num):
     return write_arr
 
 
-def main(title,chunk_num):
+def main(title, chunk_num):
     gc = gspread.service_account(
         filename='./secrets/my-project-1577070881918-23f3103bcd2e.json')
     sh = gc.open(title)
@@ -95,63 +98,34 @@ def main(title,chunk_num):
             except BaseException:
                 pass
 
-            new_rows_num = (
+            num_data_rows = (
                 (len(wksh.row_values(row_num)) - 1) // chunk_num) + 1
+            rows_per_data_row = 4
 
-            new_sheet_rows_num = 4 * new_rows_num + 1
+            new_sheet_rows_num = num_data_rows * rows_per_data_row
             inst_wksh = sh.add_worksheet(
                 title=instrument_name,
                 rows=new_sheet_rows_num,
                 cols=chunk_num)
 
-            write_arr = produce_write_arr(row_num, chunk_num, new_rows_num)
+            write_arr = produce_write_arr(row_num, chunk_num, num_data_rows)
 
-            start_range = "A2"
+            start_range = "A1"
             end_range = f"{colnum_string(len(write_arr[-1]))}{len(write_arr)+1}"
             range_cells = f"{start_range}:{end_range}"
             print(f"Writing data for instrument - {instrument_name}")
             inst_wksh.update(range_cells, write_arr, raw=False)
 
-            num_rows = len(write_arr) + 1
-
-            for row in range(
-                    4,
-                    num_rows +
-                    1,
-                    4):  # Format every third row starting at the 3rd row
+            first_row = 1
+            while first_row <= new_sheet_rows_num:
+                # Merge every fourth row starting at the 1st row
                 rate_limit_wait()
+                inst_wksh.merge_cells(get_range(first_row, chunk_num))
 
-                inst_wksh.format(get_range(row, chunk_num), {
-                    "horizontalAlignment": "CENTER",
-                })
-
-            for row in range(
-                    3,
-                    num_rows +
-                    1,
-                    4):  # Format every third row starting at the 3rd row
+                # Format every fourth row starting at the 2nd row
+                second_row = first_row + 1
                 rate_limit_wait()
-
-                inst_wksh.format(get_range(row, chunk_num), {
-                    "horizontalAlignment": "CENTER",
-                    "textFormat": {
-                        "foregroundColor": {
-                            "red": (128 / 255),
-                            "green": (128 / 255),
-                            "blue": (128 / 255)
-                        },
-                        "fontSize": 12,
-                        "italic": True
-                    }
-                })
-
-            for row in range(
-                    2,
-                    num_rows +
-                    1,
-                    4):  # Format every third row starting at the 2nd row
-                rate_limit_wait()
-                inst_wksh.format(get_range(row, chunk_num), {
+                inst_wksh.format(get_range(second_row, chunk_num), {
                     "backgroundColor": {
                         "red": (224 / 255),
                         "green": (224 / 255),
@@ -164,14 +138,30 @@ def main(title,chunk_num):
                     }
                 })
 
-            for row in range(
-                    1,
-                    num_rows +
-                    1,
-                    4):  # Merge every third row starting at the 1st row
+                # Format every fourth row starting at the 3rd row
+                third_row = first_row + 2
                 rate_limit_wait()
+                inst_wksh.format(get_range(third_row, chunk_num), {
+                    "horizontalAlignment": "CENTER",
+                    "textFormat": {
+                        "foregroundColor": {
+                            "red": (128 / 255),
+                            "green": (128 / 255),
+                            "blue": (128 / 255)
+                        },
+                        "fontSize": 12,
+                        "italic": True
+                    }
+                })
 
-                inst_wksh.merge_cells(get_range(row, chunk_num))
+                # Format every fourth row starting at the 4th  row
+                fourth_row = first_row + 3
+                rate_limit_wait()
+                inst_wksh.format(get_range(fourth_row, chunk_num), {
+                    "horizontalAlignment": "CENTER",
+                })
+
+                first_row += rows_per_data_row
 
             # Give a title to the page
             title_range = f"A1:{colnum_string(chunk_num)}1"
@@ -194,7 +184,7 @@ def main(title,chunk_num):
             })
             inst_wksh.update('A1', instrument_name)
 
-            # Wait a minute to not exceed rate limit
+            # Wait 10sec to not exceed rate limit
             time.sleep(10)
 
 
