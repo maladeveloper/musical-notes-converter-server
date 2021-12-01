@@ -166,12 +166,15 @@ def add_worksheet_data(inst_wksh, write_arr):
     range_cells = f"{start_range}:{end_range}"
     inst_wksh.update(range_cells, write_arr, raw=False)
 
+def access_spreadsheet(title):
+    gspreadsheet = gspread.service_account(
+        filename='./secrets/my-project-1577070881918-23f3103bcd2e.json')
+    return gspreadsheet.open(title)
+
 def main(title, width_rows):
     rows_per_data_row = 4
 
-    gspreadsheet = gspread.service_account(
-        filename='./secrets/my-project-1577070881918-23f3103bcd2e.json')
-    spreadsheet = gspreadsheet.open(title)
+    spreadsheet = access_spreadsheet(title)
     wksh = spreadsheet.sheet1
 
     cols_with_headers = wksh.col_values(1)
