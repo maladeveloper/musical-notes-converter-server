@@ -181,33 +181,34 @@ def main(title, width_rows):
         row_num = i + HEADER_ROWS + 1
         instrument_name = wksh.acell(f"A{row_num}").value
 
-        if instrument_name:
-            delete_old_sheet(spreadsheet, instrument_name)
+        if not instrument_name: continue
 
-            num_data_rows = (
-                (len(wksh.row_values(row_num)) - 1) // width_rows) + 1
+        delete_old_sheet(spreadsheet, instrument_name)
 
-            new_sheet_rows_num = num_data_rows * rows_per_data_row
+        num_data_rows = (
+            (len(wksh.row_values(row_num)) - 1) // width_rows) + 1
 
-            inst_wksh = spreadsheet.add_worksheet(
-                title=instrument_name,
-                rows=new_sheet_rows_num,
-                cols=width_rows)
+        new_sheet_rows_num = num_data_rows * rows_per_data_row
 
-            print(f"Writing data for instrument - {instrument_name}")
-            write_arr = produce_write_arr(row_num, width_rows, num_data_rows)
-            add_worksheet_data(inst_wksh, write_arr)
+        inst_wksh = spreadsheet.add_worksheet(
+            title=instrument_name,
+            rows=new_sheet_rows_num,
+            cols=width_rows)
 
-            format_instrument_worksheet(
-                inst_wksh,
-                new_sheet_rows_num,
-                rows_per_data_row,
-                width_rows)
+        print(f"Writing data for instrument - {instrument_name}")
+        write_arr = produce_write_arr(row_num, width_rows, num_data_rows)
+        add_worksheet_data(inst_wksh, write_arr)
 
-            add_worksheet_title(inst_wksh, instrument_name, width_rows)
+        format_instrument_worksheet(
+            inst_wksh,
+            new_sheet_rows_num,
+            rows_per_data_row,
+            width_rows)
 
-            # Wait 10sec to not exceed rate limit
-            time.sleep(10)
+        add_worksheet_title(inst_wksh, instrument_name, width_rows)
+
+        # Wait 10sec to not exceed rate limit
+        time.sleep(10)
 
 
 if __name__ == "__main__":
