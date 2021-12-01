@@ -24,19 +24,11 @@ def insert_spacing(write_arr, bar_num):
     # Change spaces to be before rather than after
     write_arr.insert(0, write_arr.pop())
 
-
 def get_range(row, width_rows):
     '''Gets the spreadsheet range for a row and the width'''
     start_range = f"A{row}"
     end_range = f"{colnum_string(width_rows)}{row}"
     return f"{start_range}:{end_range}"
-
-
-def rate_limit_wait():
-    '''Waits a certain number of seconds to as not to overwhelm rate limit'''
-    seconds = 0.75
-    time.sleep(seconds)
-
 
 def produce_write_arr(main_sheet, row_num, width_rows, num_data_rows):
     '''Produces the write array for a row number which is associated with a instrument'''
@@ -68,8 +60,8 @@ def produce_write_arr(main_sheet, row_num, width_rows, num_data_rows):
     insert_spacing(write_arr, bar_num)
     return write_arr
 
-
 def format_instrument_worksheet(
+        seconds,
         inst_wksh,
         new_sheet_rows_num,
         rows_per_data_row,
@@ -78,12 +70,12 @@ def format_instrument_worksheet(
     first_row = 1
     while first_row <= new_sheet_rows_num:
         # Merge every fourth row starting at the 1st row
-        rate_limit_wait()
+        time.sleep(seconds)
         inst_wksh.merge_cells(get_range(first_row, width_rows))
 
         # Format every fourth row starting at the 2nd row
         second_row = first_row + 1
-        rate_limit_wait()
+        time.sleep(seconds)
         inst_wksh.format(get_range(second_row, width_rows), {
             "backgroundColor": {
                 "red": (224 / 255),
@@ -99,7 +91,7 @@ def format_instrument_worksheet(
 
         # Format every fourth row starting at the 3rd row
         third_row = first_row + 2
-        rate_limit_wait()
+        time.sleep(seconds)
         inst_wksh.format(get_range(third_row, width_rows), {
             "horizontalAlignment": "CENTER",
             "textFormat": {
@@ -115,13 +107,12 @@ def format_instrument_worksheet(
 
         # Format every fourth row starting at the 4th  row
         fourth_row = first_row + 3
-        rate_limit_wait()
+        time.sleep(seconds)
         inst_wksh.format(get_range(fourth_row, width_rows), {
             "horizontalAlignment": "CENTER",
         })
 
         first_row += rows_per_data_row
-
 
 def add_worksheet_title(inst_wksh, instrument_name, width_rows):
     '''Adds a title to the worksheet'''
@@ -145,7 +136,6 @@ def add_worksheet_title(inst_wksh, instrument_name, width_rows):
     })
     inst_wksh.update('A1', instrument_name)
 
-
 def delete_old_sheet(spreadsheet, instrument_name):
     '''Deletes the old sheet for the instrument if it exists'''
     try:
@@ -166,48 +156,63 @@ def access_spreadsheet(title):
         filename='./secrets/my-project-1577070881918-23f3103bcd2e.json')
     return gspreadsheet.open(title)
 
+def converter(title, main_sheet, header_rows,  width_rows, seconds):
+    try:
+        rows_per_data_row = 4
+
+        spreadsheet = access_spreadsheet(title)
+        wksh = spreadsheet.worksheet(main_sheet)
+
+        cols_with_headers = wksh.col_values(1)
+        cols = cols_with_headers[header_rows:]  # Remove the header coloumns
+
+        for i in range(len(cols)):
+            row_num = i + header_rows + 1
+            instrument_name = wksh.acell(f"A{row_num}").value
+
+            if not instrument_name: continue
+
+            delete_old_sheet(spreadsheet, instrument_name)
+
+            num_data_rows = (
+                (len(wksh.row_values(row_num)) - 1) // width_rows) + 1
+
+            new_sheet_rows_num = num_data_rows * rows_per_data_row
+
+            inst_wksh = spreadsheet.add_worksheet(
+                title=instrument_name,
+                rows=new_sheet_rows_num,
+                cols=width_rows)
+
+            print(f"Writing data for instrument - {instrument_name}")
+            write_arr = produce_write_arr(main_sheet, row_num, width_rows, num_data_rows)
+            add_worksheet_data(inst_wksh, write_arr)
+
+            format_instrument_worksheet(
+                seconds,
+                inst_wksh,
+                new_sheet_rows_num,
+                rows_per_data_row,
+                width_rows)
+
+            add_worksheet_title(inst_wksh, instrument_name, width_rows)
+
+            # Wait to not exceed rate limit
+            time.sleep(seconds)
+    except gspread.exceptions.APIError as e:
+
+        if seconds == 5:
+            print('failed with these paramenters', title, main_sheet, header_rows,  width_rows, seconds)
+            raise Exception('Resource exhausted')
+
+        seconds += 1
+        print('Sleeping for a minute to avoid rate limiting...')
+        time.sleep(60)
+        converter(title, main_sheet, header_rows,  width_rows, seconds)
+
 def main(title, main_sheet, header_rows,  width_rows):
-    rows_per_data_row = 4
-
-    spreadsheet = access_spreadsheet(title)
-    wksh = spreadsheet.worksheet(main_sheet)
-
-    cols_with_headers = wksh.col_values(1)
-    cols = cols_with_headers[header_rows:]  # Remove the header coloumns
-
-    for i in range(len(cols)):
-        row_num = i + header_rows + 1
-        instrument_name = wksh.acell(f"A{row_num}").value
-
-        if not instrument_name: continue
-
-        delete_old_sheet(spreadsheet, instrument_name)
-
-        num_data_rows = (
-            (len(wksh.row_values(row_num)) - 1) // width_rows) + 1
-
-        new_sheet_rows_num = num_data_rows * rows_per_data_row
-
-        inst_wksh = spreadsheet.add_worksheet(
-            title=instrument_name,
-            rows=new_sheet_rows_num,
-            cols=width_rows)
-
-        print(f"Writing data for instrument - {instrument_name}")
-        write_arr = produce_write_arr(main_sheet, row_num, width_rows, num_data_rows)
-        add_worksheet_data(inst_wksh, write_arr)
-
-        format_instrument_worksheet(
-            inst_wksh,
-            new_sheet_rows_num,
-            rows_per_data_row,
-            width_rows)
-
-        add_worksheet_title(inst_wksh, instrument_name, width_rows)
-
-        # Wait 10sec to not exceed rate limit
-        time.sleep(10)
-
+    seconds = 0.6
+    converter(title, main_sheet, header_rows,  width_rows, seconds)
 
 if __name__ == "__main__":
     main("Copy of Storm Score", "Sheet1",3,12)
