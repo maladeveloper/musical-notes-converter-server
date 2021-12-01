@@ -3,10 +3,6 @@ import json
 from pprint import pprint
 import gspread
 
-HEADER_ROWS = 3
-SHEET_1 = "SHEET1"
-
-
 def colnum_string(num):
     '''Converts coloumn number to google spreadsheet coloumn string'''
     string = ""
@@ -14,7 +10,6 @@ def colnum_string(num):
         num, remainder = divmod(num - 1, 26)
         string = chr(65 + remainder) + string
     return string
-
 
 def insert_spacing(write_arr, bar_num):
     '''Inserts a space before every bar in the write array'''
@@ -43,7 +38,7 @@ def rate_limit_wait():
     time.sleep(seconds)
 
 
-def produce_write_arr(row_num, width_rows, num_data_rows):
+def produce_write_arr(main_sheet, row_num, width_rows, num_data_rows):
     '''Produces the write array for a row number which is associated with a instrument'''
     bar_num = 4  # Each bar has 4 values
     write_arr = []
@@ -57,15 +52,15 @@ def produce_write_arr(row_num, width_rows, num_data_rows):
             ref_count += 1
 
             ref = f"{ref_col}{row_num}"
-            value = fr'={SHEET_1}!{ref}'
+            value = fr'={main_sheet}!{ref}'
             row_arr.append(value)
 
             num_ref = f"{ref_col}3"  # Bar number always on row 3
-            num_value = fr'={SHEET_1}!{num_ref}'
+            num_value = fr'={main_sheet}!{num_ref}'
             num_arr.append(num_value)
 
             aff_ref = f"{ref_col}{row_num - 1}"
-            aff_value = fr'={SHEET_1}!{aff_ref}'
+            aff_value = fr'={main_sheet}!{aff_ref}'
             aff_arr.append(aff_value)
 
         write_arr.extend([num_arr, aff_arr, row_arr])
@@ -171,17 +166,17 @@ def access_spreadsheet(title):
         filename='./secrets/my-project-1577070881918-23f3103bcd2e.json')
     return gspreadsheet.open(title)
 
-def main(title, width_rows):
+def main(title, main_sheet, header_rows,  width_rows):
     rows_per_data_row = 4
 
     spreadsheet = access_spreadsheet(title)
-    wksh = spreadsheet.sheet1
+    wksh = spreadsheet.worksheet(main_sheet)
 
     cols_with_headers = wksh.col_values(1)
-    cols = cols_with_headers[HEADER_ROWS:]  # Remove the header coloumns
+    cols = cols_with_headers[header_rows:]  # Remove the header coloumns
 
     for i in range(len(cols)):
-        row_num = i + HEADER_ROWS + 1
+        row_num = i + header_rows + 1
         instrument_name = wksh.acell(f"A{row_num}").value
 
         if not instrument_name: continue
@@ -199,7 +194,7 @@ def main(title, width_rows):
             cols=width_rows)
 
         print(f"Writing data for instrument - {instrument_name}")
-        write_arr = produce_write_arr(row_num, width_rows, num_data_rows)
+        write_arr = produce_write_arr(main_sheet, row_num, width_rows, num_data_rows)
         add_worksheet_data(inst_wksh, write_arr)
 
         format_instrument_worksheet(
@@ -215,4 +210,4 @@ def main(title, width_rows):
 
 
 if __name__ == "__main__":
-    main("Copy of Storm Score", 8)
+    main("Copy of Storm Score", "Sheet1",3,12)

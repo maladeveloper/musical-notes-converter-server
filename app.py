@@ -12,12 +12,16 @@ def convert():
     except KeyError:
         return Response("Title not specified", status=400, mimetype="text/plain")
 
+    main_sheet = data.get("main_sheet", "Sheet1")
+    header_rows = data.get("header_rows", 3)
     width_rows = data.get("width_rows", 12)
 
     try:
-        converter(title, width_rows)
+        converter(title, main_sheet, header_rows, width_rows)
     except gspread.exceptions.SpreadsheetNotFound:
         return Response("Unable to Access Spreadsheet", status=403, mimetype="text/plain")
+    except gspread.exceptions.WorksheetNotFound:
+        return Response("Worksheet Not Found", status=404, mimetype="text/plain")
     except BaseException:
         return Response("Internal Server Error", status=500, mimetype="text/plain")
 
