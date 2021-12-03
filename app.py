@@ -2,6 +2,9 @@ import gspread
 from flask import Flask, Response, request
 from main import access_spreadsheet
 from main import main as converter 
+from concurrent.futures import ThreadPoolExecutor
+
+executor = ThreadPoolExecutor(1)
 
 app = Flask(__name__)
 
@@ -25,6 +28,8 @@ def convert():
         return Response("Worksheet Not Found", status=404, mimetype="text/plain")
     except BaseException:
         return Response("Internal Server Error", status=500, mimetype="text/plain")
+
+    executor.submit(converter, title, main_sheet, header_rows,  width_rows)
 
     return Response("Started", status=200, mimetype="text/plain")
 
