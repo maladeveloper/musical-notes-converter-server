@@ -29,6 +29,12 @@ def get_job_id(conn, title, main_sheet, num_instruments):
         return None 
     return ids[0][0]
 
+def get_job_by_id(conn, job_id):
+    cur = conn.cursor() 
+    cur.execute("""SELECT title, main_sheet, num_instruments FROM job WHERE id=%s""", (job_id,))
+    attrs = cur.fetchall()[0]
+    return attrs[0], attrs[1], attrs[2]
+    
 def get_instruments(conn, job_id):
     cur = conn.cursor() 
     cur.execute("""SELECT name FROM instrument WHERE job=%s""", (job_id,))

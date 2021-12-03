@@ -2,6 +2,7 @@ import time
 import json
 from pprint import pprint
 import gspread
+from db import get_job_by_id
 
 def colnum_string(num):
     '''Converts coloumn number to google spreadsheet coloumn string'''
@@ -161,12 +162,12 @@ def access_spreadsheet(title, main_sheet, header_rows):
 
     return spreadsheet, wksh, cols
 
-def converter(title, main_sheet, header_rows,  width_rows, seconds):
+def converter(conn, job_id, header_rows,  width_rows, seconds):
     try:
         rows_per_data_row = 4
 
+        title, main_sheet, _ = get_job_by_id(conn, job_id)
         spreadsheet, wksh, cols = access_spreadsheet(title, main_sheet, header_rows) 
-
         for i in range(len(cols)):
             row_num = i + header_rows + 1
             instrument_name = wksh.acell(f"A{row_num}").value
@@ -201,7 +202,6 @@ def converter(title, main_sheet, header_rows,  width_rows, seconds):
             # Wait to not exceed rate limit
             time.sleep(seconds)
     except gspread.exceptions.APIError as e:
-
         if seconds == 5:
             print('failed with these paramenters', title, main_sheet, header_rows,  width_rows, seconds)
             raise Exception('Resource exhausted')
@@ -210,10 +210,13 @@ def converter(title, main_sheet, header_rows,  width_rows, seconds):
         print('Sleeping for a minute to avoid rate limiting...')
         time.sleep(60)
         converter(title, main_sheet, header_rows,  width_rows, seconds)
+    except BaseException as e:
+        print("ERROR", e)
+        return
 
-def main(title, main_sheet, header_rows,  width_rows):
+def main(conn, job_id, header_rows,  width_rows):
     seconds = 0.6
-    converter(title, main_sheet, header_rows,  width_rows, seconds)
+    converter(conn, job_id, header_rows,  width_rows, seconds)
 
 if __name__ == "__main__":
     main("Copy of Storm Score", "Sheet1",3,12)

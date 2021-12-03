@@ -23,7 +23,7 @@ def convert():
     width_rows = data.get("width_rows", 12)
 
     try:
-        spreadsheet, wksh, instruments =access_spreadsheet(title, main_sheet, header_rows)
+        spreadsheet, wksh, instruments = access_spreadsheet(title, main_sheet, header_rows)
     except gspread.exceptions.SpreadsheetNotFound:
         return {"message":"Unable to Access Spreadsheet"}, 403
     except gspread.exceptions.WorksheetNotFound:
@@ -39,7 +39,7 @@ def convert():
         return {"message":"Currently Running", "job_id":running_job_id}, 200
 
     new_job_id = add_job(conn, title, main_sheet, num_instrument)
-    executor.submit(converter, title, main_sheet, header_rows,  width_rows)
+    executor.submit(converter, conn, new_job_id, header_rows,  width_rows)
 
     return {"message":"Started", "job_id":new_job_id}, 200
 

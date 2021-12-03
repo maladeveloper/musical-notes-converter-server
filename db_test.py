@@ -1,4 +1,4 @@
-from db import connect, close, add_job, add_instrument, delete_job, get_instruments, get_num_total_instruments, job_status, get_job_id
+from db import connect, close, add_job, add_instrument, delete_job, get_instruments, get_num_total_instruments, job_status, get_job_id, get_job_by_id
 import gspread
 import unittest
 import sys 
@@ -127,6 +127,23 @@ class TestGetJobId(BaseDBTester):
         job_id = get_job_id(self.conn, title, main_sheet, num_instruments)
 
         self.assertEqual(None, job_id)
+
+class TestGetJobById(BaseDBTester):
+    def test_get_job_by_id(self):
+        num_instruments = 12344
+        title = "hi"
+        main_sheet = "bye"
+        job_id = add_job(self.conn, title, main_sheet, num_instruments)
+
+        recieved_title, recieved_main_sheet, recieved_num_instruments = get_job_by_id(self.conn, job_id)
+
+        self.assertEqual([recieved_title, recieved_main_sheet, recieved_num_instruments], [title, main_sheet, num_instruments]) 
+
+        # Clean up
+        delete_job(self.conn, job_id)
+        
+
+
 
 
 if __name__ == '__main__':
