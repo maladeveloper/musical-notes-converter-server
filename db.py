@@ -10,15 +10,24 @@ def connect():
 def close(conn):
     conn.close()
 
-def add_job(conn, num_instruments):
+def add_job(conn, title, main_sheet, num_instruments):
     job_id = randrange(1000000,10000000) 
-    conn.cursor().execute("""INSERT INTO job (id, num_instruments) VALUES (%s, %s);""", (job_id, num_instruments))
+    conn.cursor().execute("""INSERT INTO job (id, title, main_sheet, num_instruments) VALUES (%s, %s, %s, %s);""", (job_id, title, main_sheet, num_instruments))
     conn.commit()
     return job_id
 
 def add_instrument(conn, job_id, name):
     conn.cursor().execute("""INSERT INTO instrument (name, job) VALUES (%s, %s);""", (name, job_id))
     conn.commit()
+
+def get_job_id(conn, title, main_sheet, num_instruments):
+    cur = conn.cursor() 
+    cur.execute("""SELECT id FROM job WHERE title=%s AND main_sheet=%s AND num_instruments=%s""", (title, main_sheet, num_instruments))
+    ids = cur.fetchall()
+
+    if len(ids) == 0:
+        return None 
+    return ids[0][0]
 
 def get_instruments(conn, job_id):
     cur = conn.cursor() 
