@@ -32,8 +32,13 @@ def get_job_id(conn, title, main_sheet, num_instruments):
 def get_job_by_id(conn, job_id):
     cur = conn.cursor() 
     cur.execute("""SELECT title, main_sheet, num_instruments FROM job WHERE id=%s""", (job_id,))
-    attrs = cur.fetchall()[0]
-    return attrs[0], attrs[1], attrs[2]
+
+    jobs = cur.fetchall()
+
+    if len(jobs) == 0:
+        return None 
+    
+    return list(jobs[0] )
     
 def get_instruments(conn, job_id):
     cur = conn.cursor() 
@@ -51,8 +56,10 @@ def delete_job(conn, job_id):
 
 def job_status(job_id):
     conn = connect()
+    if not get_job_by_id(conn, job_id):
+        return { "message": "Done" }
     return {
-            "totalInstrumentsNum":get_num_total_instruments(conn, job_id),
+            "message": "Running",
             "doneInstrumentsArr": get_instruments(conn, job_id)
             }
 

@@ -97,7 +97,7 @@ class TestJobStatus(BaseDBTester):
 
         self.assertEqual(status, 
             {
-                "totalInstrumentsNum":num_instruments,
+                "message": "Running",
                 "doneInstrumentsArr": ['yoo', 'anotherone', 'yepp']
             }
         )
@@ -105,6 +105,12 @@ class TestJobStatus(BaseDBTester):
         # Clean up
         delete_job(self.conn, job_id)
 
+    def test_done_job_status(self):
+        job_id = 1234
+        status = job_status(job_id)
+
+        self.assertEqual(status, { "message": "Done" })
+        
 class TestGetJobId(BaseDBTester):
     def test_get_job_when_present(self):
         num_instruments = 12344
@@ -136,13 +142,14 @@ class TestGetJobById(BaseDBTester):
         job_id = add_job(self.conn, title, main_sheet, num_instruments)
 
         recieved_title, recieved_main_sheet, recieved_num_instruments = get_job_by_id(self.conn, job_id)
-
         self.assertEqual([recieved_title, recieved_main_sheet, recieved_num_instruments], [title, main_sheet, num_instruments]) 
 
         # Clean up
         delete_job(self.conn, job_id)
-        
 
+    def test_get_job_when_not_present(self):
+        job_id = 12344
+        self.assertEqual(get_job_by_id(self.conn, job_id), None)
 
 
 

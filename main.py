@@ -2,7 +2,7 @@ import time
 import json
 from pprint import pprint
 import gspread
-from db import get_job_by_id
+from db import get_job_by_id, add_instrument
 
 def colnum_string(num):
     '''Converts coloumn number to google spreadsheet coloumn string'''
@@ -160,7 +160,9 @@ def access_spreadsheet(title, main_sheet, header_rows):
     cols_with_headers = wksh.col_values(1)
     cols = cols_with_headers[header_rows:]  # Remove the header coloumns
 
-    return spreadsheet, wksh, cols
+    instruments = [ instrument for instrument in cols if instrument ]
+
+    return spreadsheet, wksh, instruments
 
 def converter(conn, job_id, header_rows,  width_rows, seconds):
     try:
@@ -186,7 +188,6 @@ def converter(conn, job_id, header_rows,  width_rows, seconds):
                 rows=new_sheet_rows_num,
                 cols=width_rows)
 
-            print(f"Writing data for instrument - {instrument_name}")
             write_arr = produce_write_arr(main_sheet, row_num, width_rows, num_data_rows)
             add_worksheet_data(inst_wksh, write_arr)
 
@@ -201,6 +202,9 @@ def converter(conn, job_id, header_rows,  width_rows, seconds):
 
             # Wait to not exceed rate limit
             time.sleep(seconds)
+
+            print(f"Writing data for instrument - {instrument_name}")
+            add_instrument(conn, job_id, instrument_name)  
     except gspread.exceptions.APIError as e:
         if seconds == 5:
             print('failed with these paramenters', title, main_sheet, header_rows,  width_rows, seconds)
