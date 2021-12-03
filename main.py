@@ -151,20 +151,21 @@ def add_worksheet_data(inst_wksh, write_arr):
     range_cells = f"{start_range}:{end_range}"
     inst_wksh.update(range_cells, write_arr, raw=False)
 
-def access_spreadsheet(title):
+def access_spreadsheet(title, main_sheet, header_rows):
     gspreadsheet = gspread.service_account(
         filename='./secrets/my-project-1577070881918-23f3103bcd2e.json')
-    return gspreadsheet.open(title)
+    spreadsheet = gspreadsheet.open(title)
+    wksh = spreadsheet.worksheet(main_sheet)
+    cols_with_headers = wksh.col_values(1)
+    cols = cols_with_headers[header_rows:]  # Remove the header coloumns
+
+    return spreadsheet, wksh, cols
 
 def converter(title, main_sheet, header_rows,  width_rows, seconds):
     try:
         rows_per_data_row = 4
 
-        spreadsheet = access_spreadsheet(title)
-        wksh = spreadsheet.worksheet(main_sheet)
-
-        cols_with_headers = wksh.col_values(1)
-        cols = cols_with_headers[header_rows:]  # Remove the header coloumns
+        spreadsheet, wksh, cols = access_spreadsheet(title, main_sheet, header_rows) 
 
         for i in range(len(cols)):
             row_num = i + header_rows + 1
