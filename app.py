@@ -39,7 +39,8 @@ def convert():
         return {"message":"Unable to Access Spreadsheet"}, 403
     except gspread.exceptions.WorksheetNotFound:
         return {"message":"Worksheet Not Found"}, 404
-    except BaseException:
+    except BaseException as e:
+        print(e)
         return {"message":"Internal Server Error"}, 500
 
     conn = connect()

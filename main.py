@@ -2,7 +2,7 @@ import time
 import json
 from pprint import pprint
 import gspread
-from db import get_job_by_id, add_instrument
+from db import get_job_by_id, add_instrument, delete_job
 
 def colnum_string(num):
     '''Converts coloumn number to google spreadsheet coloumn string'''
@@ -206,6 +206,7 @@ def converter(conn, job_id, header_rows,  width_rows, seconds):
 
             print(f"Writing data for instrument - {instrument_name}")
             add_instrument(conn, job_id, instrument_name)  
+        delete_job(conn, job_id)
     except gspread.exceptions.APIError as e:
         if seconds == 5:
             print('failed with these paramenters', title, main_sheet, header_rows,  width_rows, seconds)
@@ -218,6 +219,8 @@ def converter(conn, job_id, header_rows,  width_rows, seconds):
         converter(conn, job_id, header_rows,  width_rows, seconds)
     except BaseException as e:
         print("ERROR", e)
+        print('Deleting previous job')
+        delete_job(conn, job_id)
         return
 
 def main(conn, job_id, header_rows,  width_rows):
