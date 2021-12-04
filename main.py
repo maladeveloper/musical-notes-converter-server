@@ -206,6 +206,11 @@ def converter(conn, job_id, header_rows,  width_rows, seconds):
 
             print(f"Writing data for instrument - {instrument_name}")
             add_instrument(conn, job_id, instrument_name)  
+
+        # Delete job after 30 seconds
+        print("Success! Wait 20 seconds before deleting job")
+        time.sleep(20)
+        print("Deleting job...")
         delete_job(conn, job_id)
     except gspread.exceptions.APIError as e:
         if seconds >= 5:
