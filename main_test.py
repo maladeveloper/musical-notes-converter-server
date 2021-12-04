@@ -8,7 +8,6 @@ from main import main as converter
 
 
 class TestMainConverter(unittest.TestCase):
-
     def setUp(self):
         self.conn = connect()
 
@@ -17,14 +16,9 @@ class TestMainConverter(unittest.TestCase):
         self.header_rows = 3
         self.width_rows = 12
 
-        _, _, _, instruments = access_spreadsheet(
-            self.title, self.main_sheet, self.header_rows)
+        _, _, _, instruments = access_spreadsheet(self.title, self.main_sheet, self.header_rows)
 
-        self.job_id = add_job(
-            self.conn,
-            self.title,
-            self.main_sheet,
-            len(instruments))
+        self.job_id = add_job(self.conn, self.title, self.main_sheet, len(instruments))
 
         if not sys.warnoptions:
             warnings.simplefilter("ignore")
@@ -36,8 +30,7 @@ class TestMainConverter(unittest.TestCase):
         '''Throws SpreadsheetNotFound error when user does not have access to spreadsheet'''
         title = 'wrongTItleLOLZX'
         try:
-            access_spreadsheet(
-                title, self.main_sheet, self.header_rows)
+            access_spreadsheet(title, self.main_sheet, self.header_rows)
         except gspread.exceptions.SpreadsheetNotFound:
             self.assertTrue(True)
             return
@@ -48,8 +41,7 @@ class TestMainConverter(unittest.TestCase):
         is not found in spreadsheet'''
         main_sheet = 'WrongSheetTitleLOZ'
         try:
-            access_spreadsheet(
-                self.title, main_sheet, self.header_rows)
+            access_spreadsheet(self.title, main_sheet, self.header_rows)
         except gspread.exceptions.WorksheetNotFound:
             self.assertTrue(True)
             return

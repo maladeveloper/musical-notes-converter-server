@@ -33,9 +33,7 @@ class TestAddJob(BaseDBTester):
 
         self.cur.execute("""SELECT * FROM job WHERE id=%s""", (job_id,))
         records = self.cur.fetchall()
-        self.assertEqual(
-            records, [
-                (job_id, num_instruments, title, main_sheet)])
+        self.assertEqual(records, [(job_id, num_instruments, title, main_sheet)])
 
         # Clean up
         self.cur.execute("""DELETE FROM job WHERE id=%s""", (job_id,))
@@ -73,8 +71,7 @@ class TestDeleteJob(BaseDBTester):
         self.cur.execute("""SELECT * FROM job WHERE id=%s""", (job_id,))
         jobs = self.cur.fetchall()
         self.assertEqual(jobs, [])
-        self.cur.execute(
-            """SELECT * FROM instrument WHERE job=%s""", (job_id,))
+        self.cur.execute("""SELECT * FROM instrument WHERE job=%s""", (job_id,))
         instruments = self.cur.fetchall()
         self.assertEqual(instruments, [])
 
@@ -116,10 +113,7 @@ class TestJobStatus(BaseDBTester):
 
         status = job_status(job_id)
 
-        self.assertEqual(
-            status, {
-                "message": "Running", "doneInstrumentsArr": [
-                    'yoo', 'anotherone', 'yepp']})
+        self.assertEqual(status, {"message": "Running", "doneInstrumentsArr": ['yoo', 'anotherone', 'yepp']})
 
         # Clean up
         delete_job(self.conn, job_id)
@@ -136,8 +130,7 @@ class TestGetJobId(BaseDBTester):
         num_instruments = 12344
         title = "hi"
         main_sheet = "bye"
-        expected_job_id = add_job(
-            self.conn, title, main_sheet, num_instruments)
+        expected_job_id = add_job(self.conn, title, main_sheet, num_instruments)
 
         job_id = get_job_id(self.conn, title, main_sheet, num_instruments)
 
@@ -163,10 +156,9 @@ class TestGetJobById(BaseDBTester):
         main_sheet = "bye"
         job_id = add_job(self.conn, title, main_sheet, num_instruments)
 
-        recieved_title, recieved_main_sheet, recieved_num_instruments = get_job_by_id(
-            self.conn, job_id)
-        self.assertEqual([recieved_title, recieved_main_sheet, recieved_num_instruments], [
-                         title, main_sheet, num_instruments])
+        recieved_title, recieved_main_sheet, recieved_num_instruments = get_job_by_id(self.conn, job_id)
+        self.assertEqual([recieved_title, recieved_main_sheet, recieved_num_instruments],
+                         [title, main_sheet, num_instruments])
 
         # Clean up
         delete_job(self.conn, job_id)

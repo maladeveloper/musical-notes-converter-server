@@ -3,7 +3,7 @@ import unittest
 import requests
 from db import connect, delete_job
 
-LOCAL = False
+LOCAL = True
 
 if LOCAL:
     print("Be sure to have the app running!!")

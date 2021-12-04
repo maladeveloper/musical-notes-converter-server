@@ -3,6 +3,7 @@ import os
 from random import randrange
 import psycopg2
 
+
 def connect():
     database_url = os.environ['DATABASE_URL']
     conn = psycopg2.connect(database_url, sslmode='require')
@@ -15,12 +16,8 @@ def close(conn):
 
 def add_job(conn, title, main_sheet, num_instruments):
     job_id = randrange(1000000, 10000000)
-    conn.cursor().execute(
-        """INSERT INTO job (id, title, main_sheet, num_instruments) VALUES (%s, %s, %s, %s);""",
-        (job_id,
-         title,
-         main_sheet,
-         num_instruments))
+    conn.cursor().execute("""INSERT INTO job (id, title, main_sheet, num_instruments) VALUES (%s, %s, %s, %s);""",
+                          (job_id, title, main_sheet, num_instruments))
     conn.commit()
     return job_id
 
@@ -33,11 +30,8 @@ def add_instrument(conn, job_id, name):
 
 def get_job_id(conn, title, main_sheet, num_instruments):
     cur = conn.cursor()
-    cur.execute(
-        """SELECT id FROM job WHERE title=%s AND main_sheet=%s AND num_instruments=%s""",
-        (title,
-         main_sheet,
-         num_instruments))
+    cur.execute("""SELECT id FROM job WHERE title=%s AND main_sheet=%s AND num_instruments=%s""",
+                (title, main_sheet, num_instruments))
     ids = cur.fetchall()
 
     if len(ids) == 0:
@@ -47,8 +41,7 @@ def get_job_id(conn, title, main_sheet, num_instruments):
 
 def get_job_by_id(conn, job_id):
     cur = conn.cursor()
-    cur.execute(
-        """SELECT title, main_sheet, num_instruments FROM job WHERE id=%s""", (job_id,))
+    cur.execute("""SELECT title, main_sheet, num_instruments FROM job WHERE id=%s""", (job_id,))
 
     jobs = cur.fetchall()
 

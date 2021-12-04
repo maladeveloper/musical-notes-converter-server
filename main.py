@@ -66,12 +66,7 @@ def produce_write_arr(main_sheet, row_num, width_rows, num_data_rows):
     return write_arr
 
 
-def format_instrument_worksheet(
-        seconds,
-        inst_wksh,
-        new_sheet_rows_num,
-        rows_per_data_row,
-        width_rows):
+def format_instrument_worksheet(seconds, inst_wksh, new_sheet_rows_num, rows_per_data_row, width_rows):
     '''Formats the worksheet to make it look pretty.'''
     first_row = 1
     while first_row <= new_sheet_rows_num:
@@ -179,8 +174,8 @@ def converter(conn, job_id, header_rows, width_rows, seconds):
         rows_per_data_row = 4
 
         title, main_sheet, _ = get_job_by_id(conn, job_id)
-        spreadsheet, wksh, cols, instruments = access_spreadsheet(
-            title, main_sheet, header_rows)
+        spreadsheet, wksh, cols, instruments = access_spreadsheet(title, main_sheet, header_rows)
+
         for i in range(len(cols)):
             row_num = i + header_rows + 1
             instrument_name = wksh.acell(f"A{row_num}").value
@@ -191,26 +186,15 @@ def converter(conn, job_id, header_rows, width_rows, seconds):
 
             delete_old_sheet(spreadsheet, instrument_name)
 
-            num_data_rows = (
-                (len(wksh.row_values(row_num)) - 1) // width_rows) + 1
-
+            num_data_rows = ((len(wksh.row_values(row_num)) - 1) // width_rows) + 1
             new_sheet_rows_num = num_data_rows * rows_per_data_row
 
-            inst_wksh = spreadsheet.add_worksheet(
-                title=instrument_name,
-                rows=new_sheet_rows_num,
-                cols=width_rows)
+            inst_wksh = spreadsheet.add_worksheet(title=instrument_name, rows=new_sheet_rows_num, cols=width_rows)
 
-            write_arr = produce_write_arr(
-                main_sheet, row_num, width_rows, num_data_rows)
+            write_arr = produce_write_arr(main_sheet, row_num, width_rows, num_data_rows)
             add_worksheet_data(inst_wksh, write_arr)
 
-            format_instrument_worksheet(
-                seconds,
-                inst_wksh,
-                new_sheet_rows_num,
-                rows_per_data_row,
-                width_rows)
+            format_instrument_worksheet(seconds, inst_wksh, new_sheet_rows_num, rows_per_data_row, width_rows)
 
             add_worksheet_title(inst_wksh, instrument_name, width_rows)
 
@@ -227,13 +211,7 @@ def converter(conn, job_id, header_rows, width_rows, seconds):
         delete_job(conn, job_id)
     except gspread.exceptions.APIError as e:
         if seconds >= 5:
-            print(
-                'failed with these paramenters',
-                title,
-                main_sheet,
-                header_rows,
-                width_rows,
-                seconds)
+            print('failed with these paramenters', title, main_sheet, header_rows, width_rows, seconds)
             raise Exception('Resource exhausted')
 
         seconds += 1
