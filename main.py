@@ -208,7 +208,7 @@ def converter(conn, job_id, header_rows,  width_rows, seconds):
             add_instrument(conn, job_id, instrument_name)  
         delete_job(conn, job_id)
     except gspread.exceptions.APIError as e:
-        if seconds == 5:
+        if seconds >= 5:
             print('failed with these paramenters', title, main_sheet, header_rows,  width_rows, seconds)
             raise Exception('Resource exhausted')
 
