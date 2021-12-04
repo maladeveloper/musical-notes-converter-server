@@ -1,18 +1,18 @@
-import time
-import json 
+import json
 import unittest
 import requests
 from db import connect, delete_job
 
-local = False
+LOCAL = False
 
-if local:
+if LOCAL:
     print("Be sure to have the app running!!")
+
 
 class TestAppApi(unittest.TestCase):
     def setUp(self):
         self.conn = connect()
-        if local:
+        if LOCAL:
             self.base_url = 'http://127.0.0.1:5000/'
         else:
             self.base_url = 'https://musical-notes-converter.herokuapp.com/'
@@ -26,18 +26,20 @@ class TestAppApi(unittest.TestCase):
     def test_success_hit(self):
         payload = {
             "title": "Score1",
-            "mainSheet":"asd"
+            "mainSheet": "asd"
         }
         status_code, message = self.post_request(payload)
 
-        self.assertEqual([status_code, message['message'], message['numInstruments']], [200,'Started', 2]) 
+        self.assertEqual([status_code, message['message'],
+                         message['numInstruments']], [200, 'Started', 2])
         job_id = message['jobId']
 
         payload = {
             "jobId": job_id
         }
         status_code, message = self.post_request(payload, append_url='status')
-        self.assertEqual([status_code, message['message'], message['doneInstrumentsArr']], [200,'Running', []]) 
+        self.assertEqual([status_code, message['message'],
+                         message['doneInstrumentsArr']], [200, 'Running', []])
 
         # Clean up
         delete_job(self.conn, job_id)
@@ -45,12 +47,13 @@ class TestAppApi(unittest.TestCase):
     def test_double_hits(self):
         payload = {
             "title": "Score1",
-            "mainSheet":"asd"
+            "mainSheet": "asd"
         }
         self.post_request(payload)
         status_code, message = self.post_request(payload)
 
-        self.assertEqual([status_code, message['message'], message['numInstruments']], [200,'Currently Running', 2]) 
+        self.assertEqual([status_code, message['message'], message['numInstruments']], [
+                         200, 'Currently Running', 2])
         job_id = message['jobId']
 
         # Clean up
@@ -59,24 +62,25 @@ class TestAppApi(unittest.TestCase):
     def test_entire_conversion(self):
         payload = {
             "title": "Score1",
-            "mainSheet":"asd"
+            "mainSheet": "asd"
         }
-        status_code, message = self.post_request(payload)
+        _, message = self.post_request(payload)
 
         job_id = message['jobId']
         payload = {
             "jobId": job_id
         }
-        status_code, message = self.post_request(payload, append_url='status')
+        _, message = self.post_request(payload, append_url='status')
         status = message['message']
         while status == 'Running':
-            status_code, message = self.post_request(payload, append_url='status')
+            _, message = self.post_request(
+                payload, append_url='status')
             status = message['message']
             try:
                 instruments = message['doneInstrumentsArr']
-            except:
+            except BaseException:
                 pass
         self.assertEqual(status, 'Done')
-        self.assertEqual(instruments,['F. VOICE 2', 'VIOLIN 1'])
+        self.assertEqual(instruments, ['F. VOICE 2', 'VIOLIN 1'])
         # Clean up
         delete_job(self.conn, job_id)

@@ -4,6 +4,7 @@ from pprint import pprint
 import gspread
 from db import get_job_by_id, add_instrument, delete_job
 
+
 def colnum_string(num):
     '''Converts coloumn number to google spreadsheet coloumn string'''
     string = ""
@@ -11,6 +12,7 @@ def colnum_string(num):
         num, remainder = divmod(num - 1, 26)
         string = chr(65 + remainder) + string
     return string
+
 
 def insert_spacing(write_arr, bar_num):
     '''Inserts a space before every bar in the write array'''
@@ -25,11 +27,13 @@ def insert_spacing(write_arr, bar_num):
     # Change spaces to be before rather than after
     write_arr.insert(0, write_arr.pop())
 
+
 def get_range(row, width_rows):
     '''Gets the spreadsheet range for a row and the width'''
     start_range = f"A{row}"
     end_range = f"{colnum_string(width_rows)}{row}"
     return f"{start_range}:{end_range}"
+
 
 def produce_write_arr(main_sheet, row_num, width_rows, num_data_rows):
     '''Produces the write array for a row number which is associated with a instrument'''
@@ -60,6 +64,7 @@ def produce_write_arr(main_sheet, row_num, width_rows, num_data_rows):
 
     insert_spacing(write_arr, bar_num)
     return write_arr
+
 
 def format_instrument_worksheet(
         seconds,
@@ -115,6 +120,7 @@ def format_instrument_worksheet(
 
         first_row += rows_per_data_row
 
+
 def add_worksheet_title(inst_wksh, instrument_name, width_rows):
     '''Adds a title to the worksheet'''
     title_range = f"A1:{colnum_string(width_rows)}1"
@@ -137,6 +143,7 @@ def add_worksheet_title(inst_wksh, instrument_name, width_rows):
     })
     inst_wksh.update('A1', instrument_name)
 
+
 def delete_old_sheet(spreadsheet, instrument_name):
     '''Deletes the old sheet for the instrument if it exists'''
     try:
@@ -145,12 +152,14 @@ def delete_old_sheet(spreadsheet, instrument_name):
     except BaseException:
         pass
 
+
 def add_worksheet_data(inst_wksh, write_arr):
     '''Adds the notes data to the instrument worksheet'''
     start_range = "A1"
     end_range = f"{colnum_string(len(write_arr[-1]))}{len(write_arr)+1}"
     range_cells = f"{start_range}:{end_range}"
     inst_wksh.update(range_cells, write_arr, raw=False)
+
 
 def access_spreadsheet(title, main_sheet, header_rows):
     gspreadsheet = gspread.service_account(
@@ -160,21 +169,24 @@ def access_spreadsheet(title, main_sheet, header_rows):
     cols_with_headers = wksh.col_values(1)
     cols = cols_with_headers[header_rows:]  # Remove the header coloumns
 
-    instruments = [ instrument for instrument in cols if instrument ]
+    instruments = [instrument for instrument in cols if instrument]
 
     return spreadsheet, wksh, cols, instruments
 
-def converter(conn, job_id, header_rows,  width_rows, seconds):
+
+def converter(conn, job_id, header_rows, width_rows, seconds):
     try:
         rows_per_data_row = 4
 
         title, main_sheet, _ = get_job_by_id(conn, job_id)
-        spreadsheet, wksh, cols, instruments = access_spreadsheet(title, main_sheet, header_rows) 
+        spreadsheet, wksh, cols, instruments = access_spreadsheet(
+            title, main_sheet, header_rows)
         for i in range(len(cols)):
             row_num = i + header_rows + 1
             instrument_name = wksh.acell(f"A{row_num}").value
 
-            if not instrument_name: continue
+            if not instrument_name:
+                continue
             print(f"Starting for {instrument_name}...")
 
             delete_old_sheet(spreadsheet, instrument_name)
@@ -189,7 +201,8 @@ def converter(conn, job_id, header_rows,  width_rows, seconds):
                 rows=new_sheet_rows_num,
                 cols=width_rows)
 
-            write_arr = produce_write_arr(main_sheet, row_num, width_rows, num_data_rows)
+            write_arr = produce_write_arr(
+                main_sheet, row_num, width_rows, num_data_rows)
             add_worksheet_data(inst_wksh, write_arr)
 
             format_instrument_worksheet(
@@ -205,7 +218,7 @@ def converter(conn, job_id, header_rows,  width_rows, seconds):
             time.sleep(seconds)
 
             print(f"Writing data for instrument - {instrument_name}")
-            add_instrument(conn, job_id, instrument_name)  
+            add_instrument(conn, job_id, instrument_name)
 
         # Delete job after 30 seconds
         print("Success! Wait 20 seconds before deleting job")
@@ -214,24 +227,32 @@ def converter(conn, job_id, header_rows,  width_rows, seconds):
         delete_job(conn, job_id)
     except gspread.exceptions.APIError as e:
         if seconds >= 5:
-            print('failed with these paramenters', title, main_sheet, header_rows,  width_rows, seconds)
+            print(
+                'failed with these paramenters',
+                title,
+                main_sheet,
+                header_rows,
+                width_rows,
+                seconds)
             raise Exception('Resource exhausted')
 
         seconds += 1
         print("Currently the number of seconds waiting is", seconds)
         print('Sleeping for a minute to avoid rate limiting...')
         time.sleep(60)
-        converter(conn, job_id, header_rows,  width_rows, seconds)
+        converter(conn, job_id, header_rows, width_rows, seconds)
     except BaseException as e:
         print("ERROR", e)
         print('Deleting previous job')
         delete_job(conn, job_id)
         return
 
-def main(conn, job_id, header_rows,  width_rows):
+
+def main(conn, job_id, header_rows, width_rows):
     seconds = 0.6
     print("Beginning conversion...")
-    converter(conn, job_id, header_rows,  width_rows, seconds)
+    converter(conn, job_id, header_rows, width_rows, seconds)
+
 
 if __name__ == "__main__":
-    main("Copy of Storm Score", "Sheet1",3,12)
+    main("Copy of Storm Score", "Sheet1", 3, 12)
