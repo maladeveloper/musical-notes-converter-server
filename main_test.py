@@ -3,8 +3,8 @@ import unittest
 import sys
 import gspread
 from db import connect, add_job, delete_job
-from main import access_spreadsheet
-from main import main as converter
+from main import access_spreadsheet, converter
+from main import main
 
 
 class TestMainConverter(unittest.TestCase):
@@ -24,7 +24,24 @@ class TestMainConverter(unittest.TestCase):
             warnings.simplefilter("ignore")
 
     def test_success(self):
-        converter(self.conn, self.job_id, self.header_rows, self.width_rows)
+        main(self.conn, self.job_id, self.header_rows, self.width_rows)
+
+    def test_rate_limit_hitting_converter_success(self):
+        title = 'Score2'
+        main_sheet = 'Sheet1'
+        header_rows = 3
+        # In production seconds is 0.8 seconds but here it is 0 to show rate limiting
+        seconds = 0 
+        start_row = 0
+        _, _, _, instruments = access_spreadsheet(title, main_sheet, header_rows)
+        job_id = add_job(self.conn, title, main_sheet, len(instruments))
+
+
+        print('Starting rate limiting converter...')
+        converter(self.conn, job_id, header_rows, width_rows, seconds, start_row)
+
+
+        
 
     def test_spreadsheet_access_error(self):
         '''Throws SpreadsheetNotFound error when user does not have access to spreadsheet'''

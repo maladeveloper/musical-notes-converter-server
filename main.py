@@ -169,15 +169,15 @@ def access_spreadsheet(title, main_sheet, header_rows):
     return spreadsheet, wksh, cols, instruments
 
 
-def converter(conn, job_id, header_rows, width_rows, seconds):
+def converter(conn, job_id, header_rows, width_rows, seconds, start_row):
     try:
         rows_per_data_row = 4
 
         title, main_sheet, _ = get_job_by_id(conn, job_id)
         spreadsheet, wksh, cols, instruments = access_spreadsheet(title, main_sheet, header_rows)
 
-        for i in range(len(cols)):
-            row_num = i + header_rows + 1
+        for row  in range(start_row, len(cols)):
+            row_num = row + header_rows + 1
             instrument_name = wksh.acell(f"A{row_num}").value
 
             if not instrument_name:
@@ -218,7 +218,9 @@ def converter(conn, job_id, header_rows, width_rows, seconds):
         print("Currently the number of seconds waiting is", seconds)
         print('Sleeping for a minute to avoid rate limiting...')
         time.sleep(60)
-        converter(conn, job_id, header_rows, width_rows, seconds)
+        start_row = row 
+        print("Starting from row-", start_row)
+        converter(conn, job_id, header_rows, width_rows, seconds, start_row)
     except BaseException as e:
         print("ERROR", e)
         print('Deleting previous job')
@@ -227,9 +229,10 @@ def converter(conn, job_id, header_rows, width_rows, seconds):
 
 
 def main(conn, job_id, header_rows, width_rows):
-    seconds = 0.6
+    seconds = 0.7
+    start_row = 0
     print("Beginning conversion...")
-    converter(conn, job_id, header_rows, width_rows, seconds)
+    converter(conn, job_id, header_rows, width_rows, seconds, start_row)
 
 
 if __name__ == "__main__":
