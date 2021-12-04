@@ -162,19 +162,20 @@ def access_spreadsheet(title, main_sheet, header_rows):
 
     instruments = [ instrument for instrument in cols if instrument ]
 
-    return spreadsheet, wksh, instruments
+    return spreadsheet, wksh, cols, instruments
 
 def converter(conn, job_id, header_rows,  width_rows, seconds):
     try:
         rows_per_data_row = 4
 
         title, main_sheet, _ = get_job_by_id(conn, job_id)
-        spreadsheet, wksh, cols = access_spreadsheet(title, main_sheet, header_rows) 
+        spreadsheet, wksh, cols, instruments = access_spreadsheet(title, main_sheet, header_rows) 
         for i in range(len(cols)):
             row_num = i + header_rows + 1
             instrument_name = wksh.acell(f"A{row_num}").value
 
             if not instrument_name: continue
+            print(f"Starting for {instrument_name}...")
 
             delete_old_sheet(spreadsheet, instrument_name)
 
@@ -220,6 +221,7 @@ def converter(conn, job_id, header_rows,  width_rows, seconds):
 
 def main(conn, job_id, header_rows,  width_rows):
     seconds = 0.6
+    print("Beginning conversion...")
     converter(conn, job_id, header_rows,  width_rows, seconds)
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ class TestMainConverter(unittest.TestCase):
         self.header_rows = 3
         self.width_rows = 12
 
-        spreadsheet, wksh, instruments = access_spreadsheet(self.title, self.main_sheet, self.header_rows)
+        spreadsheet, wksh, _, instruments = access_spreadsheet(self.title, self.main_sheet, self.header_rows)
 
         self.job_id = add_job(self.conn, self.title, self.main_sheet, len(instruments))
 
@@ -31,7 +31,7 @@ class TestMainConverter(unittest.TestCase):
         '''Throws SpreadsheetNotFound error when user does not have access to spreadsheet'''
         title = 'wrongTItleLOLZX'
         try:
-            spreadsheet, wksh, instruments = access_spreadsheet(title, self.main_sheet, self.header_rows)
+            spreadsheet, wksh, _, instruments = access_spreadsheet(title, self.main_sheet, self.header_rows)
         except gspread.exceptions.SpreadsheetNotFound: 
             self.assertTrue(True)
             return
@@ -41,7 +41,7 @@ class TestMainConverter(unittest.TestCase):
         '''Throws a WorksheetNotFound error when main worksheet to run off is not found in spreadsheet'''
         main_sheet = 'WrongSheetTitleLOZ'
         try:
-            spreadsheet, wksh, instruments = access_spreadsheet(self.title, main_sheet, self.header_rows)
+            spreadsheet, wksh, _, instruments = access_spreadsheet(self.title, main_sheet, self.header_rows)
         except gspread.exceptions.WorksheetNotFound: 
             self.assertTrue(True)
             return

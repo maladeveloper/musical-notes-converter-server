@@ -34,7 +34,7 @@ def convert():
     width_rows = data.get("widthRows", 12)
 
     try:
-        spreadsheet, wksh, instruments = access_spreadsheet(title, main_sheet, header_rows)
+        spreadsheet, wksh, _, instruments = access_spreadsheet(title, main_sheet, header_rows)
     except gspread.exceptions.SpreadsheetNotFound:
         return {"message":"Unable to Access Spreadsheet"}, 403
     except gspread.exceptions.WorksheetNotFound:
