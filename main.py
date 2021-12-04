@@ -212,9 +212,10 @@ def converter(conn, job_id, header_rows,  width_rows, seconds):
             raise Exception('Resource exhausted')
 
         seconds += 1
+        print("Currently the number of seconds waiting is", seconds)
         print('Sleeping for a minute to avoid rate limiting...')
         time.sleep(60)
-        converter(title, main_sheet, header_rows,  width_rows, seconds)
+        converter(conn, job_id, header_rows,  width_rows, seconds)
     except BaseException as e:
         print("ERROR", e)
         return
