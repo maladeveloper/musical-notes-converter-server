@@ -1,6 +1,6 @@
 """Houses the tests for the database access functions"""
 import unittest
-from db import (
+from src.db import (
     connect,
     close,
     add_job,

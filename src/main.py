@@ -2,7 +2,7 @@ import time
 import json
 from pprint import pprint
 import gspread
-from db import get_job_by_id, add_instrument, delete_job
+from src.db import get_job_by_id, add_instrument, delete_job
 
 
 def colnum_string(num):

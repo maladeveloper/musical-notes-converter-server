@@ -1,9 +1,9 @@
 from concurrent.futures import ThreadPoolExecutor
 import gspread
 from flask import Flask, request
-from main import access_spreadsheet
-from main import main as converter
-from db import connect, get_job_id, add_job, job_status
+from src.main import access_spreadsheet
+from src.main import main as converter
+from src.db import connect, get_job_id, add_job, job_status
 
 executor = ThreadPoolExecutor(1)
 
