@@ -4,10 +4,12 @@ from flask import Flask, request
 from src.main import access_spreadsheet
 from src.main import main as converter
 from src.db import connect, get_job_id, add_job, job_status
+from flask_cors import CORS
 
 executor = ThreadPoolExecutor(1)
 
 app = Flask(__name__)
+CORS(app)
 
 
 @app.route("/status", methods=['POST'])
@@ -31,7 +33,7 @@ def convert():
 
     main_sheet = data.get("mainSheet", "Sheet1")
     header_rows = data.get("headerRows", 3)
-    width_rows = data.get("widthRows", 12)
+    width_rows = int(data.get("widthRows", 12))
 
     try:
         _, _, _, instruments = access_spreadsheet( title, main_sheet, header_rows)
